@@ -11,6 +11,7 @@ import androidx.glance.GlanceTheme
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
 import androidx.glance.layout.*
@@ -24,10 +25,17 @@ import com.example.myapplication.data.*
 class ContaDiasWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val events = EventRepository(context).loadEvents()
+        val repo = EventRepository(context)
+        val appWidgetId = GlanceAppWidgetManager(context).getAppWidgetId(id)
+        val eventId = repo.loadWidgetEvent(appWidgetId)
+        val events = repo.loadEvents()
         val now = System.currentTimeMillis()
-        val event = events.filter { it.dateMillis > now }.minByOrNull { it.dateMillis }
-            ?: events.firstOrNull()
+        val event = if (eventId != null) {
+            events.find { it.id == eventId }
+        } else {
+            events.filter { it.dateMillis > now }.minByOrNull { it.dateMillis }
+                ?: events.firstOrNull()
+        }
 
         provideContent {
             GlanceTheme {
@@ -54,10 +62,7 @@ private fun WidgetContent(event: Event?, now: Long) {
         if (event == null) {
             Text(
                 text = "Adicione um evento",
-                style = TextStyle(
-                    color = ColorProvider(textColor),
-                    fontSize = 14.sp,
-                ),
+                style = TextStyle(color = ColorProvider(textColor), fontSize = 14.sp),
             )
         } else {
             val unit = bestUnit(now, event.dateMillis)
@@ -65,16 +70,11 @@ private fun WidgetContent(event: Event?, now: Long) {
             val future = isFuture(event.dateMillis)
 
             Column(
-                modifier = GlanceModifier
-                    .fillMaxSize()
-                    .padding(16.dp),
+                modifier = GlanceModifier.fillMaxSize().padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    text = event.emoji,
-                    style = TextStyle(fontSize = 24.sp),
-                )
+                Text(text = event.emoji, style = TextStyle(fontSize = 24.sp))
                 Text(
                     text = fmtNumber(n),
                     style = TextStyle(
