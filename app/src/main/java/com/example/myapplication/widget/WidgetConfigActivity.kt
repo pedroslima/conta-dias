@@ -22,11 +22,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.glance.appwidget.GlanceAppWidgetManager
-import androidx.lifecycle.lifecycleScope
 import com.example.myapplication.data.*
 import com.example.myapplication.ui.theme.MyApplicationTheme
-import kotlinx.coroutines.launch
 
 class WidgetConfigActivity : ComponentActivity() {
 
@@ -54,15 +51,10 @@ class WidgetConfigActivity : ComponentActivity() {
                     events = events,
                     onSelect = { event ->
                         repo.saveWidgetEvent(appWidgetId, event.id)
-                        lifecycleScope.launch {
-                            val glanceId = GlanceAppWidgetManager(this@WidgetConfigActivity)
-                                .getGlanceIdBy(appWidgetId)
-                            ContaDiasWidget().update(this@WidgetConfigActivity, glanceId)
-                            setResult(RESULT_OK, Intent().apply {
-                                putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-                            })
-                            finish()
-                        }
+                        setResult(RESULT_OK, Intent().apply {
+                            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+                        })
+                        finish()
                     },
                     onCancel = { finish() },
                 )
