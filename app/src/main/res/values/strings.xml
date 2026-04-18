@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Conta Dias</string>
+    <string name="widget_description">Exibe a contagem de um evento na tela inicial</string>
+</resources>
