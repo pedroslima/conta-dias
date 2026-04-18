@@ -1,21 +1,21 @@
 package com.example.myapplication.widget
 
-import android.appwidget.AppWidgetManager
-import android.content.ComponentName
 import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
-import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
+import androidx.glance.currentState
 import androidx.glance.layout.*
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
@@ -24,22 +24,23 @@ import androidx.glance.unit.ColorProvider
 import com.example.myapplication.MainActivity
 import com.example.myapplication.data.*
 
+val EVENT_ID_KEY = stringPreferencesKey("event_id")
+
 class ContaDiasWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val repo = EventRepository(context)
-        val appWidgetId = resolveAppWidgetId(context, id)
-        val eventId = appWidgetId?.let { repo.loadWidgetEvent(it) }
-        val events = repo.loadEvents()
+        val events = EventRepository(context).loadEvents()
         val now = System.currentTimeMillis()
-        val event = if (eventId != null) {
-            events.find { it.id == eventId }
-        } else {
-            events.filter { it.dateMillis > now }.minByOrNull { it.dateMillis }
-                ?: events.firstOrNull()
-        }
 
         provideContent {
+            val prefs = currentState<Preferences>()
+            val eventId = prefs[EVENT_ID_KEY]
+            val event = if (eventId != null) {
+                events.find { it.id == eventId }
+            } else {
+                events.filter { it.dateMillis > now }.minByOrNull { it.dateMillis }
+                    ?: events.firstOrNull()
+            }
             GlanceTheme {
                 WidgetContent(event, now)
             }
@@ -111,11 +112,4 @@ private fun WidgetContent(event: Event?, now: Long) {
             }
         }
     }
-}
-
-private fun resolveAppWidgetId(context: Context, glanceId: GlanceId): Int? {
-    val manager = GlanceAppWidgetManager(context)
-    val allIds = AppWidgetManager.getInstance(context)
-        .getAppWidgetIds(ComponentName(context, ContaDiasWidgetReceiver::class.java))
-    return allIds.firstOrNull { manager.getGlanceIdBy(it) == glanceId }
 }

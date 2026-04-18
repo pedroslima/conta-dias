@@ -57,17 +57,6 @@ class EventRepository(private val context: Context) {
         return events
     }
 
-    fun saveWidgetEvent(appWidgetId: Int, eventId: String) {
-        prefs.edit().putString("widget_$appWidgetId", eventId).apply()
-    }
-
-    fun loadWidgetEvent(appWidgetId: Int): String? =
-        prefs.getString("widget_$appWidgetId", null)
-
-    fun clearWidgetEvent(appWidgetId: Int) {
-        prefs.edit().remove("widget_$appWidgetId").apply()
-    }
-
     private fun iso(s: String): Long =
         java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.US).parse(s)?.time
             ?: System.currentTimeMillis()
