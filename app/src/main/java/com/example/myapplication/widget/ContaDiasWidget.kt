@@ -1,5 +1,7 @@
 package com.example.myapplication.widget
 
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
@@ -26,8 +28,8 @@ class ContaDiasWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val repo = EventRepository(context)
-        val appWidgetId = GlanceAppWidgetManager(context).getAppWidgetId(id)
-        val eventId = repo.loadWidgetEvent(appWidgetId)
+        val appWidgetId = resolveAppWidgetId(context, id)
+        val eventId = appWidgetId?.let { repo.loadWidgetEvent(it) }
         val events = repo.loadEvents()
         val now = System.currentTimeMillis()
         val event = if (eventId != null) {
@@ -109,4 +111,11 @@ private fun WidgetContent(event: Event?, now: Long) {
             }
         }
     }
+}
+
+private fun resolveAppWidgetId(context: Context, glanceId: GlanceId): Int? {
+    val manager = GlanceAppWidgetManager(context)
+    val allIds = AppWidgetManager.getInstance(context)
+        .getAppWidgetIds(ComponentName(context, ContaDiasWidgetReceiver::class.java))
+    return allIds.firstOrNull { manager.getGlanceIdBy(it) == glanceId }
 }
